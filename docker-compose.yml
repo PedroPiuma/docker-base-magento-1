@@ -1,0 +1,64 @@
+services:
+  apache:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: magento_1
+    ports:
+      - "${APACHE_HTTP_PORT}:80" # web
+      - "${XDEBUG_PORT}:9000" # xdebug
+      - "${APACHE_HTTPS_PORT}:443" # https
+    volumes:
+      - ./src:/var/www/html
+      - ~/.composer:/var/www/.composer
+      - ~/.npm:/var/www/.npm
+    environment:
+      XDEBUG_CONFIG: "remote_host=localhost remote_connect_back=1"
+      PHP_IDE_CONFIG: "serverName=Docker"
+    depends_on:
+      - db
+    links:
+      - db
+    networks:
+      - ${NETWORK_NAME}
+
+  db:
+    image: ${DB_IMAGE}
+    ports:
+      - "${DB_PORT}:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - ${NETWORK_NAME}
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    environment:
+     - PMA_HOST=db
+     - PMA_USER=root
+     - PMA_PASSWORD=${DB_ROOT_PASSWORD}
+    ports:
+      - "${PHPMYADMIN_PORT}:80"
+    networks:
+      - ${NETWORK_NAME} 
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "${MAILHOG_SMTP_PORT}:1025"
+      - "${MAILHOG_WEB_PORT}:8025"
+    networks:
+      - ${NETWORK_NAME}
+
+networks:
+  MYMAGENTO-network:
+    driver: bridge
+
+volumes:
+  dbdata:
+    driver: local

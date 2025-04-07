@@ -1,0 +1,7 @@
+/src
+/src/*
+/src/.*
+.DS_Store
+/.idea
+/*.log
+.env
